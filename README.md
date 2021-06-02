@@ -1,21 +1,31 @@
-# Card Fraud Detector
+# Bunnings Catalogue Merge Application
 
-Consider the following credit card fraud detection algorithm:
-A credit card transaction is comprised of the following elements;
-hashed credit card number
-timestamp - of format 'year-month-dayThour:minute:second'
-price - of format 'dollars.cents'
+coding skill challenge can be found here: https://github.com/tosumitagrawal/codingskills.
 
-Transactions are to be received as a comma separated string of elements eg. '10d7ce2f43e35fa57d1bbf8b1e2, 2014-04-29T13:15:54, 10.00'
+In a nutshell, when presented with an inventory of products from company A and company B, a common inventory must be produced. The logic for working out what is in common is based on the barcode of a product stock item being universal to that product class across companies.
 
-A credit card will be identified as fraudulent if the sum of amounts for a unique hashed credit
-card number over a 24-hour sliding window period exceeds the price threshold.
 
-The file passed to your app will contain a sequence of transactions in chronological order.
+The data is fed in through a collection of CSV files (input folder) and the common catalogue is produced as a CSV file (output folder);
+
+
 
 ## Getting Started
 
-This NodeJS application has been built with Typescript for type safety, InversifyJS for Dependency Injection and Jest for tests.
+This NodeJS application has been built with Typescript for type safety, InversifyJS for Dependency Injection and Jest for tests as well as some CSV file reading/writing libs.
+
+The bootstrap to the application is main.ts
+
+There are three main services:
+
+company-cataloger.service.ts - which is used to add product items from a company to the inventory
+
+csv-file-reader.service - which is used to read csv files and convert them to domain models
+
+csv-file-writer.service - which is used to write to a csv file given an array of domain models
+
+
+## Solution
+A graph of the company source and barcodes are each concurrently maintained on adding a line item. Eventually common barcodes can be looked up in the barcode graph and from there it links to its source (supplier, sku, description);
 
 ### Prerequisites
 
@@ -44,16 +54,26 @@ npm run test
 
 Run the following
 
-npx ts-node ./src/index.ts  {{ threshold amount}} {{ csv file location }}
+For one-off result
 
 ```
-npx ts-node ./src/index.ts 1000 assets/transactions.csv
+npm run start
 ```
+
+For dev server
+
+```
+npm run start:dev
+```
+
 
 
 ## Improvements
 
-* Improved error handling with parsing command line arguments
-* Improved error handling with parsing CSV file
-* Separate file reader and fraud detection into seperate modules
-* Add indexing to improve speed for large transaction files
+* Ability to supply input argumenbts via command line arguments or NPM 'prompt' library
+* Improved error handling with parsing CSV files
+* Separate file reader and cataloger into seperate modules
+* Improved tests around CSV file reading and writing.
+* Performance improvements for handling large csv file sizes
+* Add linter as you save
+* Clarification on terminology - catalogue, inventory, stock, etc.

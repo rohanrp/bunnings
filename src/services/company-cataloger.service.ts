@@ -2,16 +2,14 @@ import { injectable } from "inversify";
 import { CatalogerService } from '../entities/cataloger.interface';
 import { ProductSource } from '../entities/product-source.model';
 import { CatalogueProduct } from '../entities/catalogue-product.interface';
+import { ProductInventory, Supplier, CatalogueProductInventoryItem, Suppliers } from '../entities/product-inventory.model';
 
 @injectable()
 export class CompanyCatalogerService implements CatalogerService {
-	private sourceList: SourceState = {};
-	private barcodeList: CatalogueBarcode = {};
-	private productList: Set<CatalogueProduct> = new Set<CatalogueProduct>();
 
-	public addToInventory(source: ProductSource): CatalogueProduct[] {
-		this.sourceList[source.id] = {source, suppliers: {}};
-		const sourceRef = this.sourceList[source.id];
+	public addToInventory(sourceList: ProductInventory, source: ProductSource): CatalogueProduct[] {
+		sourceList.sourceList[source.id] = {source, suppliers: {}};
+		const sourceRef = sourceList.sourceList[source.id];
 
 		source.suppliers.forEach(supplier => {
 			sourceRef.suppliers[supplier.id] = {supplierName: supplier.name, catalog: {}}
@@ -22,54 +20,29 @@ export class CompanyCatalogerService implements CatalogerService {
 			const getDescriptionBySKU =  (sku: string): string => source.catalogItems.find(item => item.sku === sku)?.description || "";
 			
 			const supplier: Supplier = sourceRef.suppliers[barcodeItem.supplierID] = sourceRef.suppliers[barcodeItem.supplierID] || {};
-			const product: CatalogueProduct = supplier.catalog[barcodeItem.sku] = supplier.catalog[barcodeItem.sku] || {};
+			
 
-			product.description = product.description || getDescriptionBySKU(barcodeItem.sku);
-			product.barcodes = [...(product.barcodes || []), barcodeItem.barcode];
-			product.sku = product.sku || barcodeItem.sku;
-			product.source = product.source || source.name;
+			const inventoryItem: CatalogueProductInventoryItem = sourceList.barcodeList[barcodeItem.barcode] = sourceList.barcodeList[barcodeItem.barcode] || {};
+			if (!inventoryItem.product) {
+				const product: CatalogueProduct = supplier.catalog[barcodeItem.sku] = supplier.catalog[barcodeItem.sku] || {};
 
-			const inventoryItem: CatalogueProductInventoryItem = this.barcodeList[barcodeItem.barcode] = this.barcodeList[barcodeItem.barcode] || {};
-			inventoryItem.suppliers = inventoryItem.suppliers || new Set<Suppliers>();
-			inventoryItem.suppliers.add(supplier);
+				product.description = product.description || getDescriptionBySKU(barcodeItem.sku);
+				product.barcodes = [...(product.barcodes || []), barcodeItem.barcode];
+				product.sku = product.sku || barcodeItem.sku;
+				product.source = product.source || source.name;
 
-			inventoryItem.sources = inventoryItem.sources  || new Set<ProductSource>();
-			inventoryItem.sources.add(source);
+				inventoryItem.suppliers = inventoryItem.suppliers || new Set<Suppliers>();
+				inventoryItem.suppliers.add(supplier);
 
-			inventoryItem.product = inventoryItem.product || product;
-			this.productList.add(inventoryItem.product);
+				inventoryItem.sources = inventoryItem.sources  || new Set<ProductSource>();
+				inventoryItem.sources.add(source);
+
+				inventoryItem.product = product;
+			}
+			
+			sourceList.productList.add(inventoryItem.product);
 		});
-		return Array.from(this.productList);	
+		return Array.from(sourceList.productList);	
 	}
 }
 
-
-interface SourceState {
-	[sourceId: string]: {
-		source: ProductSource,
-		suppliers: Suppliers,
-	}
-}
-
-interface Suppliers {
-	[supplierID: string]: Supplier
-}
-
-interface Supplier {
-	supplierName: string;
-	catalog: SupplierCatalog;
-}
-
-interface SupplierCatalog {
-	[productSKU: string]: CatalogueProduct
-}
-
-interface CatalogueProductInventoryItem{
-	suppliers: Set<Supplier>,
-	sources: Set<ProductSource>,
-	product: CatalogueProduct,
-}
-
-interface CatalogueBarcode {
-	[barcodeId: string]: CatalogueProductInventoryItem
-}

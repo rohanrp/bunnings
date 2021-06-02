@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "sample": "ts-node ./src/index.ts",
-    "start": "npm run build && node build/index.js",
+    "sample": "ts-node ./src/main.ts",
+    "start": "npm run build && node build/main.js",
     "start:dev": "nodemon",
     "build": "rimraf ./build && tsc",
     "test": "jest --coverage",
